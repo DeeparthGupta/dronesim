@@ -1,0 +1,3 @@
+[submodule ".agent/universal-policies"]
+	path = .agent/universal-policies
+	url = https://github.com/DeeparthGupta/Universal-Agent-Policies.git
