@@ -1,3 +1,5 @@
+import argparse
+
 import pygame
 
 MOVEMENT_KEYS = {
@@ -16,8 +18,15 @@ CURSOR_BORDER_COLOR = pygame.Color("#B4DCFF")
 
 class World:
     def __init__(self, height, width):
-        if height <= 0 or width <= 0:
-            raise ValueError("Dimensions cannot be 0 or lower")
+        if (
+            not isinstance(height, int)
+            or isinstance(height, bool)
+            or not isinstance(width, int)
+            or isinstance(width, bool)
+            or height <= 0
+            or width <= 0
+        ):
+            raise ValueError("Dimensions must be positive integers")
 
         self.height = height
         self.width = width
@@ -32,9 +41,40 @@ def cell_rect(x, y, cell_side):
     return pygame.Rect(x * cell_side, y * cell_side, cell_side, cell_side)
 
 
+def positive_integer(value):
+    try:
+        dimension = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+
+    if dimension <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+
+    return dimension
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--width", type=positive_integer, default=10)
+    parser.add_argument("--height", type=positive_integer, default=10)
+    parser.add_argument("--cell-side", type=positive_integer, default=32)
+    return parser.parse_args(argv)
+
+
+def draw_grid(screen, world, cell_side):
+    for x in range(world.width + 1):
+        px = x * cell_side
+        pygame.draw.line(screen, GRID_COLOR, (px, 0), (px, world.height * cell_side))
+
+    for y in range(world.height + 1):
+        py = y * cell_side
+        pygame.draw.line(screen, GRID_COLOR, (0, py), (world.width * cell_side, py))
+
+
 def main():
-    world = World(height=10, width=10)
-    cell_side = 32
+    args = parse_args()
+    world = World(height=args.height, width=args.width)
+    cell_side = args.cell_side
 
     pygame.display.init()
 
@@ -70,18 +110,7 @@ def main():
 
             screen.fill(BACKGROUND_COLOR)
 
-            # Draw grid lines
-            for x in range(world.width + 1):
-                px = x * cell_side
-                pygame.draw.line(
-                    screen, GRID_COLOR, (px, 0), (px, world.height * cell_side)
-                )
-
-            for y in range(world.height + 1):
-                py = y * cell_side
-                pygame.draw.line(
-                    screen, GRID_COLOR, (0, py), (world.height * cell_side, py)
-                )
+            draw_grid(screen, world, cell_side)
 
             # Highlight cursor cell
             x, y = cursor
